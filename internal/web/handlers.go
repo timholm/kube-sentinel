@@ -373,7 +373,13 @@ func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) renderTemplate(w http.ResponseWriter, name string, data interface{}) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := s.templates.ExecuteTemplate(w, name, data); err != nil {
+	tmpl, ok := s.templates[name]
+	if !ok {
+		s.logger.Error("template not found", "template", name)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
 		s.logger.Error("template render failed", "template", name, "error", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}

@@ -32,7 +32,7 @@ type Server struct {
 	ruleEngine  *rules.Engine
 	remEngine   *remediation.Engine
 	logger      *slog.Logger
-	templates   *template.Template
+	templates   map[string]*template.Template
 	router      *mux.Router
 	httpServer  *http.Server
 
@@ -61,12 +61,23 @@ func NewServer(addr string, basePath string, store store.Store, ruleEngine *rule
 		},
 	}
 
-	// Parse templates
-	tmpl, err := template.New("").Funcs(s.templateFuncs()).ParseFS(templatesFS, "templates/*.html")
-	if err != nil {
-		return nil, err
+	// Parse templates - each page template is parsed with base.html
+	s.templates = make(map[string]*template.Template)
+	pageTemplates := []string{
+		"dashboard.html",
+		"errors.html",
+		"error_detail.html",
+		"rules.html",
+		"history.html",
+		"settings.html",
 	}
-	s.templates = tmpl
+	for _, page := range pageTemplates {
+		tmpl, err := template.New("").Funcs(s.templateFuncs()).ParseFS(templatesFS, "templates/base.html", "templates/"+page)
+		if err != nil {
+			return nil, fmt.Errorf("parsing template %s: %w", page, err)
+		}
+		s.templates[page] = tmpl
+	}
 
 	// Setup routes
 	s.router = mux.NewRouter()
