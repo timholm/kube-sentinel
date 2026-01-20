@@ -12,6 +12,12 @@ spec:
         - path:
             type: PathPrefix
             value: /kube-sentinel
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
       backendRefs:
         - name: kube-sentinel
           port: 80
