@@ -1,0 +1,91 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{block "title" .}}Kube Sentinel{{end}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        .priority-red { background-color: #fee2e2; border-left: 4px solid #ef4444; }
+        .priority-orange { background-color: #ffedd5; border-left: 4px solid #f97316; }
+        .priority-yellow { background-color: #fef3c7; border-left: 4px solid #eab308; }
+        .priority-blue { background-color: #dbeafe; border-left: 4px solid #3b82f6; }
+        .priority-gray { background-color: #f3f4f6; border-left: 4px solid #9ca3af; }
+        .badge-red { background-color: #ef4444; color: white; }
+        .badge-orange { background-color: #f97316; color: white; }
+        .badge-yellow { background-color: #eab308; color: white; }
+        .badge-blue { background-color: #3b82f6; color: white; }
+        .badge-green { background-color: #22c55e; color: white; }
+        .badge-gray { background-color: #9ca3af; color: white; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-gray-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold">Kube Sentinel</span>
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Dashboard</a>
+                        <a href="/errors" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Errors</a>
+                        <a href="/rules" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Rules</a>
+                        <a href="/history" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">History</a>
+                        <a href="/settings" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Settings</a>
+                    </div>
+                </div>
+                <div id="connection-status" class="flex items-center">
+                    <span class="w-2 h-2 bg-gray-500 rounded-full mr-2"></span>
+                    <span class="text-sm text-gray-400">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {{block "content" .}}{{end}}
+    </main>
+
+    <script>
+        // WebSocket connection for real-time updates
+        let ws;
+        let reconnectTimer;
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            ws.onopen = function() {
+                document.getElementById('connection-status').innerHTML = `
+                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                    <span class="text-sm text-green-400">Connected</span>
+                `;
+            };
+
+            ws.onclose = function() {
+                document.getElementById('connection-status').innerHTML = `
+                    <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                    <span class="text-sm text-red-400">Disconnected</span>
+                `;
+                reconnectTimer = setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.type === 'error') {
+                    // Trigger HTMX refresh of error lists
+                    htmx.trigger(document.body, 'newError');
+                } else if (data.type === 'remediation') {
+                    htmx.trigger(document.body, 'newRemediation');
+                } else if (data.type === 'stats') {
+                    htmx.trigger(document.body, 'statsUpdate');
+                }
+            };
+        }
+
+        connectWebSocket();
+    </script>
+</body>
+</html>
+{{end}}
