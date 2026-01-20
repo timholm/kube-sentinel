@@ -238,5 +238,14 @@ func (s *Server) templateFuncs() template.FuncMap {
 			}
 			return s[:n] + "..."
 		},
+		"add": func(a, b int) int {
+			return a + b
+		},
+		"sub": func(a, b int) int {
+			return a - b
+		},
+		"mul": func(a, b int) int {
+			return a * b
+		},
 	}
 }
