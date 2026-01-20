@@ -29,7 +29,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: kube-sentinel
-          image: ghcr.io/kube-sentinel/kube-sentinel:latest
+          image: ghcr.io/timholm/kube-sentinel:latest
           imagePullPolicy: Always
           args:
             - --config=/etc/kube-sentinel/config.yaml

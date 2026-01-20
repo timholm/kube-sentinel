@@ -9,6 +9,7 @@ resources:
   - configmap.yaml
   - deployment.yaml
   - service.yaml
+  - httproute.yaml
 
 commonLabels:
   app.kubernetes.io/name: kube-sentinel
@@ -16,5 +17,5 @@ commonLabels:
   app.kubernetes.io/managed-by: kustomize
 
 images:
-  - name: ghcr.io/kube-sentinel/kube-sentinel
+  - name: ghcr.io/timholm/kube-sentinel
     newTag: latest
