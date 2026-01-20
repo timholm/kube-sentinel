@@ -1,0 +1,136 @@
+{{template "base" .}}
+
+{{define "title"}}Rules - Kube Sentinel{{end}}
+
+{{define "content"}}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">Rules</h1>
+        <span class="text-sm text-gray-500">{{len .Rules}} rules configured</span>
+    </div>
+
+    <!-- Pattern Tester -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Pattern Tester</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Pattern (regex)</label>
+                <input type="text" id="test-pattern" placeholder="CrashLoopBackOff|OOMKilled"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Sample Text</label>
+                <input type="text" id="test-sample" placeholder="Error: CrashLoopBackOff for container app"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+            </div>
+        </div>
+        <div class="mt-4 flex items-center space-x-4">
+            <button onclick="testPattern()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                Test Pattern
+            </button>
+            <span id="test-result" class="text-sm"></span>
+        </div>
+    </div>
+
+    <!-- Rules List -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pattern</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cooldown</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {{range .Rules}}
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">{{.Name}}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <code class="text-xs bg-gray-100 px-2 py-1 rounded">{{truncate .Match.Pattern 50}}</code>
+                        {{if .Match.Keywords}}
+                        <div class="mt-1 text-xs text-gray-500">
+                            Keywords: {{range .Match.Keywords}}{{.}} {{end}}
+                        </div>
+                        {{end}}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium badge-{{priorityColor .Priority}}">
+                            {{.Priority}}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {{if .Remediation}}
+                            {{if eq .Remediation.Action.String "none"}}
+                                <span class="text-sm text-gray-500">None (alert only)</span>
+                            {{else}}
+                                <span class="text-sm text-gray-900">{{.Remediation.Action}}</span>
+                            {{end}}
+                        {{else}}
+                            <span class="text-sm text-gray-500">None</span>
+                        {{end}}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {{if .Remediation}}{{formatDuration .Remediation.Cooldown}}{{else}}-{{end}}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {{if .Enabled}}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Enabled</span>
+                        {{else}}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Disabled</span>
+                        {{end}}
+                    </td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="6" class="px-6 py-4 text-center text-gray-500">No rules configured</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p class="text-sm text-blue-800">
+            Rules are loaded from the configuration file. To modify rules, edit <code class="bg-blue-100 px-1 rounded">rules.yaml</code> and restart the application.
+        </p>
+    </div>
+</div>
+
+<script>
+async function testPattern() {
+    const pattern = document.getElementById('test-pattern').value;
+    const sample = document.getElementById('test-sample').value;
+    const result = document.getElementById('test-result');
+
+    if (!pattern || !sample) {
+        result.innerHTML = '<span class="text-yellow-600">Please enter both pattern and sample text</span>';
+        return;
+    }
+
+    try {
+        const resp = await fetch('/api/rules/test', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({pattern, sample})
+        });
+        const data = await resp.json();
+
+        if (data.error) {
+            result.innerHTML = `<span class="text-red-600">Invalid regex: ${data.error}</span>`;
+        } else if (data.matches) {
+            result.innerHTML = '<span class="text-green-600">Pattern matches!</span>';
+        } else {
+            result.innerHTML = '<span class="text-yellow-600">No match</span>';
+        }
+    } catch (e) {
+        result.innerHTML = `<span class="text-red-600">Error: ${e.message}</span>`;
+    }
+}
+</script>
+{{end}}
