@@ -1,0 +1,119 @@
+{{template "base" .}}
+
+{{define "title"}}Dashboard - Kube Sentinel{{end}}
+
+{{define "content"}}
+<div class="space-y-6">
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="text-sm font-medium text-gray-500">Total Errors</div>
+            <div class="mt-2 text-3xl font-bold text-gray-900">{{.Stats.TotalErrors}}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="text-sm font-medium text-gray-500">Critical (P1)</div>
+            <div class="mt-2 text-3xl font-bold text-red-600">{{index .Stats.ErrorsByPriority "P1"}}</div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="text-sm font-medium text-gray-500">Remediations</div>
+            <div class="mt-2 text-3xl font-bold text-gray-900">{{.Stats.RemediationCount}}</div>
+            <div class="text-sm text-gray-500">
+                <span class="text-green-600">{{.Stats.SuccessfulActions}} success</span> /
+                <span class="text-red-600">{{.Stats.FailedActions}} failed</span>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="text-sm font-medium text-gray-500">Remediation Status</div>
+            <div class="mt-2">
+                {{if .RemEnabled}}
+                    {{if .DryRun}}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium badge-yellow">Dry Run</span>
+                    {{else}}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium badge-green">Active</span>
+                    {{end}}
+                {{else}}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium badge-gray">Disabled</span>
+                {{end}}
+            </div>
+            <div class="text-sm text-gray-500 mt-1">{{.ActionsThisHour}} actions this hour</div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Priority Queue -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-4 py-5 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Priority Queue</h3>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {{range .RecentErrors}}
+                <a href="/errors/{{.ID}}" class="block hover:bg-gray-50 priority-{{priorityColor .Priority}} p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium badge-{{priorityColor .Priority}}">
+                                    {{.Priority}}
+                                </span>
+                                <span class="text-sm font-medium text-gray-900 truncate">{{.Namespace}}/{{.Pod}}</span>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-600 truncate">{{truncate .Message 100}}</p>
+                        </div>
+                        <div class="ml-4 flex-shrink-0 text-right">
+                            <div class="text-sm text-gray-500">{{.Count}}x</div>
+                            <div class="text-xs text-gray-400">{{formatTime .LastSeen}}</div>
+                        </div>
+                    </div>
+                </a>
+                {{else}}
+                <div class="p-4 text-center text-gray-500">No errors found</div>
+                {{end}}
+            </div>
+            <div class="px-4 py-3 border-t border-gray-200">
+                <a href="/errors" class="text-sm text-blue-600 hover:text-blue-800">View all errors &rarr;</a>
+            </div>
+        </div>
+
+        <!-- Recent Remediations -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-4 py-5 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Recent Remediations</h3>
+            </div>
+            <div class="divide-y divide-gray-200">
+                {{range .RecentRemediations}}
+                <div class="p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2">
+                                {{if eq .Status "success"}}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium badge-green">Success</span>
+                                {{else if eq .Status "failed"}}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium badge-red">Failed</span>
+                                {{else}}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium badge-gray">Skipped</span>
+                                {{end}}
+                                <span class="text-sm font-medium text-gray-900">{{.Action}}</span>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-600">{{.Target}}</p>
+                            {{if .Message}}
+                            <p class="text-xs text-gray-500">{{truncate .Message 80}}</p>
+                            {{end}}
+                        </div>
+                        <div class="ml-4 flex-shrink-0">
+                            <div class="text-xs text-gray-400">{{formatTime .Timestamp}}</div>
+                            {{if .DryRun}}
+                            <span class="text-xs text-yellow-600">dry run</span>
+                            {{end}}
+                        </div>
+                    </div>
+                </div>
+                {{else}}
+                <div class="p-4 text-center text-gray-500">No remediations yet</div>
+                {{end}}
+            </div>
+            <div class="px-4 py-3 border-t border-gray-200">
+                <a href="/history" class="text-sm text-blue-600 hover:text-blue-800">View history &rarr;</a>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
