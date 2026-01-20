@@ -18,6 +18,7 @@ data:
 
     web:
       listen: ":8080"
+      base_path: /kube-sentinel
 
     remediation:
       enabled: true

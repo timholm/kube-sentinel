@@ -27,6 +27,7 @@ var staticFS embed.FS
 // Server handles the web dashboard
 type Server struct {
 	addr        string
+	basePath    string
 	store       store.Store
 	ruleEngine  *rules.Engine
 	remEngine   *remediation.Engine
@@ -42,9 +43,10 @@ type Server struct {
 }
 
 // NewServer creates a new web server
-func NewServer(addr string, store store.Store, ruleEngine *rules.Engine, remEngine *remediation.Engine, logger *slog.Logger) (*Server, error) {
+func NewServer(addr string, basePath string, store store.Store, ruleEngine *rules.Engine, remEngine *remediation.Engine, logger *slog.Logger) (*Server, error) {
 	s := &Server{
 		addr:       addr,
+		basePath:   basePath,
 		store:      store,
 		ruleEngine: ruleEngine,
 		remEngine:  remEngine,
@@ -189,6 +191,9 @@ func (s *Server) BroadcastStats() {
 
 func (s *Server) templateFuncs() template.FuncMap {
 	return template.FuncMap{
+		"basePath": func() string {
+			return s.basePath
+		},
 		"formatTime": func(t time.Time) string {
 			return t.Format("2006-01-02 15:04:05")
 		},

@@ -47,7 +47,7 @@
             </div>
             <div class="divide-y divide-gray-200">
                 {{range .RecentErrors}}
-                <a href="/errors/{{.ID}}" class="block hover:bg-gray-50 priority-{{priorityColor .Priority}} p-4">
+                <a href="{{basePath}}/errors/{{.ID}}" class="block hover:bg-gray-50 priority-{{priorityColor .Priority}} p-4">
                     <div class="flex items-center justify-between">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center space-x-2">
@@ -69,7 +69,7 @@
                 {{end}}
             </div>
             <div class="px-4 py-3 border-t border-gray-200">
-                <a href="/errors" class="text-sm text-blue-600 hover:text-blue-800">View all errors &rarr;</a>
+                <a href="{{basePath}}/errors" class="text-sm text-blue-600 hover:text-blue-800">View all errors &rarr;</a>
             </div>
         </div>
 
@@ -111,7 +111,7 @@
                 {{end}}
             </div>
             <div class="px-4 py-3 border-t border-gray-200">
-                <a href="/history" class="text-sm text-blue-600 hover:text-blue-800">View history &rarr;</a>
+                <a href="{{basePath}}/history" class="text-sm text-blue-600 hover:text-blue-800">View history &rarr;</a>
             </div>
         </div>
     </div>

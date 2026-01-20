@@ -117,7 +117,7 @@ func main() {
 	}, logger)
 
 	// Initialize web server
-	webServer, err := web.NewServer(cfg.Web.Listen, dataStore, ruleEngine, remEngine, logger)
+	webServer, err := web.NewServer(cfg.Web.Listen, cfg.Web.BasePath, dataStore, ruleEngine, remEngine, logger)
 	if err != nil {
 		logger.Error("failed to create web server", "error", err)
 		os.Exit(1)

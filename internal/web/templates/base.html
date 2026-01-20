@@ -28,11 +28,11 @@
                 <div class="flex items-center">
                     <span class="text-xl font-bold">Kube Sentinel</span>
                     <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Dashboard</a>
-                        <a href="/errors" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Errors</a>
-                        <a href="/rules" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Rules</a>
-                        <a href="/history" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">History</a>
-                        <a href="/settings" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Settings</a>
+                        <a href="{{basePath}}/" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Dashboard</a>
+                        <a href="{{basePath}}/errors" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Errors</a>
+                        <a href="{{basePath}}/rules" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Rules</a>
+                        <a href="{{basePath}}/history" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">History</a>
+                        <a href="{{basePath}}/settings" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-gray-700">Settings</a>
                     </div>
                 </div>
                 <div id="connection-status" class="flex items-center">
@@ -48,13 +48,16 @@
     </main>
 
     <script>
+        // Base path configuration
+        const basePath = "{{basePath}}";
+
         // WebSocket connection for real-time updates
         let ws;
         let reconnectTimer;
 
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+            ws = new WebSocket(`${protocol}//${window.location.host}${basePath}/ws`);
 
             ws.onopen = function() {
                 document.getElementById('connection-status').innerHTML = `

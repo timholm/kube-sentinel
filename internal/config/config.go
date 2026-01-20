@@ -37,7 +37,8 @@ type KubernetesConfig struct {
 
 // WebConfig holds web server settings
 type WebConfig struct {
-	Listen string `yaml:"listen"`
+	Listen   string `yaml:"listen"`
+	BasePath string `yaml:"base_path"`
 }
 
 // RemediationConfig holds remediation engine settings
