@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-sentinel-config
+  namespace: kube-sentinel
+  labels:
+    app.kubernetes.io/name: kube-sentinel
+data:
+  config.yaml: |
+    loki:
+      url: http://loki.monitoring:3100
+      query: '{namespace=~".+"} |~ "(?i)(error|fatal|panic|exception|fail)"'
+      poll_interval: 30s
+      lookback: 5m
+
+    kubernetes:
+      in_cluster: true
+
+    web:
+      listen: ":8080"
+
+    remediation:
+      enabled: true
+      dry_run: false
+      max_actions_per_hour: 50
+      excluded_namespaces:
+        - kube-system
+        - kube-public
+        - monitoring
+        - logging
+        - kube-sentinel
+
+    rules_file: /etc/kube-sentinel/rules.yaml
+
+    store:
+      type: memory
+
+  rules.yaml: |
+    rules:
+      - name: crashloop-backoff
+        match:
+          pattern: "CrashLoopBackOff|Back-off restarting failed container"
+        priority: P1
+        remediation:
+          action: restart-pod
+          cooldown: 5m
+        enabled: true
+
+      - name: oom-killed
+        match:
+          pattern: "OOMKilled|Out of memory|memory cgroup out of memory"
+        priority: P1
+        remediation:
+          action: none
+          cooldown: 10m
+        enabled: true
+
+      - name: panic
+        match:
+          pattern: "(?i)panic:|runtime error:|fatal error:"
+        priority: P1
+        remediation:
+          action: none
+          cooldown: 5m
+        enabled: true
+
+      - name: image-pull-error
+        match:
+          pattern: "ImagePullBackOff|ErrImagePull|failed to pull image"
+        priority: P2
+        remediation:
+          action: none
+          cooldown: 5m
+        enabled: true
+
+      - name: probe-failed
+        match:
+          pattern: "Readiness probe failed|Liveness probe failed"
+        priority: P2
+        remediation:
+          action: restart-pod
+          cooldown: 3m
+        enabled: true
+
+      - name: connection-refused
+        match:
+          pattern: "connection refused|ECONNREFUSED"
+        priority: P3
+        remediation:
+          action: none
+          cooldown: 2m
+        enabled: true
+
+      - name: generic-error
+        match:
+          pattern: "(?i)\\berror\\b"
+        priority: P4
+        remediation:
+          action: none
+          cooldown: 5m
+        enabled: true

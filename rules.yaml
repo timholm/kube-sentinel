@@ -1,0 +1,179 @@
+# Kube Sentinel Rules Configuration
+# Rules are evaluated in order - first match wins
+
+rules:
+  # CrashLoopBackOff - Pod keeps crashing and restarting
+  - name: crashloop-backoff
+    match:
+      pattern: "CrashLoopBackOff|Back-off restarting failed container"
+    priority: P1
+    remediation:
+      action: restart-pod
+      cooldown: 5m
+    enabled: true
+
+  # OOMKilled - Container ran out of memory
+  - name: oom-killed
+    match:
+      pattern: "OOMKilled|Out of memory|memory cgroup out of memory|Cannot allocate memory"
+    priority: P1
+    remediation:
+      action: none  # Can't auto-fix without resource changes
+      cooldown: 10m
+    enabled: true
+
+  # Panic - Go runtime panic or fatal error
+  - name: panic
+    match:
+      pattern: "(?i)panic:|runtime error:|fatal error:|goroutine .* \\[running\\]"
+    priority: P1
+    remediation:
+      action: none
+      cooldown: 5m
+    enabled: true
+
+  # Image pull errors
+  - name: image-pull-error
+    match:
+      pattern: "ImagePullBackOff|ErrImagePull|failed to pull image|manifest unknown"
+    priority: P2
+    remediation:
+      action: none  # Can't auto-fix image issues
+      cooldown: 5m
+    enabled: true
+
+  # Readiness/Liveness probe failures
+  - name: probe-failed
+    match:
+      pattern: "Readiness probe failed|Liveness probe failed|probe .* failed"
+    priority: P2
+    remediation:
+      action: restart-pod
+      cooldown: 3m
+    enabled: true
+
+  # Node pressure events
+  - name: node-pressure
+    match:
+      pattern: "NodeNotReady|DiskPressure|MemoryPressure|PIDPressure|NetworkUnavailable"
+    priority: P1
+    remediation:
+      action: none  # Node-level issues need cluster admin attention
+      cooldown: 10m
+    enabled: true
+
+  # Connection refused errors
+  - name: connection-refused
+    match:
+      pattern: "connection refused|ECONNREFUSED|dial tcp.*refused|no route to host"
+    priority: P3
+    remediation:
+      action: none
+      cooldown: 2m
+    enabled: true
+
+  # Context deadline exceeded (timeouts)
+  - name: timeout
+    match:
+      pattern: "context deadline exceeded|context canceled|timeout|timed out"
+    priority: P3
+    remediation:
+      action: none
+      cooldown: 2m
+    enabled: true
+
+  # Permission/authorization errors
+  - name: permission-denied
+    match:
+      pattern: "(?i)permission denied|access denied|forbidden|unauthorized|RBAC"
+    priority: P2
+    remediation:
+      action: none  # Can't auto-fix permission issues
+      cooldown: 5m
+    enabled: true
+
+  # Database connection errors
+  - name: database-error
+    match:
+      pattern: "(?i)database.*error|connection.*database|sql.*error|mongodb.*error|redis.*error"
+    priority: P2
+    remediation:
+      action: none
+      cooldown: 2m
+    enabled: true
+
+  # Certificate/TLS errors
+  - name: tls-error
+    match:
+      pattern: "(?i)certificate.*error|x509|TLS.*error|SSL.*error|certificate expired"
+    priority: P2
+    remediation:
+      action: none
+      cooldown: 5m
+    enabled: true
+
+  # DNS resolution errors
+  - name: dns-error
+    match:
+      pattern: "(?i)no such host|DNS.*error|name resolution|NXDOMAIN"
+    priority: P2
+    remediation:
+      action: none
+      cooldown: 2m
+    enabled: true
+
+  # Resource quota exceeded
+  - name: quota-exceeded
+    match:
+      pattern: "(?i)quota.*exceeded|resource quota|limitrange"
+    priority: P2
+    remediation:
+      action: none
+      cooldown: 10m
+    enabled: true
+
+  # Evicted pods
+  - name: pod-evicted
+    match:
+      pattern: "(?i)evicted|preempted|node.*drain"
+    priority: P2
+    remediation:
+      action: none
+      cooldown: 5m
+    enabled: true
+
+  # Generic error catch-all (lowest priority)
+  - name: generic-error
+    match:
+      pattern: "(?i)\\berror\\b"
+    priority: P4
+    remediation:
+      action: none
+      cooldown: 5m
+    enabled: true
+
+# Example: Custom rule with label matching
+# - name: production-critical
+#   match:
+#     pattern: "(?i)error"
+#     labels:
+#       environment: "production"
+#       tier: "critical"
+#   priority: P1
+#   remediation:
+#     action: restart-pod
+#     cooldown: 2m
+#   enabled: true
+
+# Example: Namespace-specific rule
+# - name: staging-errors
+#   match:
+#     pattern: "(?i)error"
+#     namespaces:
+#       - staging
+#       - dev
+#   priority: P4
+#   remediation:
+#     action: none
+#     cooldown: 5m
+#   enabled: true

@@ -1,0 +1,61 @@
+# Kube Sentinel Configuration
+# Copy this file to /etc/kube-sentinel/config.yaml or specify with --config flag
+
+loki:
+  # Loki server URL
+  url: http://loki.monitoring:3100
+
+  # LogQL query to fetch error logs
+  # This query matches logs containing error-related keywords
+  query: '{namespace=~".+"} |~ "(?i)(error|fatal|panic|exception|fail)"'
+
+  # How often to poll Loki for new logs
+  poll_interval: 30s
+
+  # How far back to look on each poll
+  lookback: 5m
+
+  # Optional: Tenant ID for multi-tenant Loki (X-Scope-OrgID header)
+  # tenant_id: ""
+
+  # Optional: Basic auth credentials
+  # username: ""
+  # password: ""
+
+kubernetes:
+  # Use in-cluster config (service account)
+  in_cluster: true
+
+  # Or specify kubeconfig path for out-of-cluster
+  # kubeconfig: ~/.kube/config
+
+web:
+  # Web dashboard listen address
+  listen: ":8080"
+
+remediation:
+  # Enable automatic remediation
+  enabled: true
+
+  # Dry run mode - log actions without executing
+  dry_run: false
+
+  # Maximum remediation actions per hour (safety limit)
+  max_actions_per_hour: 50
+
+  # Namespaces to exclude from remediation
+  excluded_namespaces:
+    - kube-system
+    - kube-public
+    - monitoring
+    - logging
+
+# Path to rules configuration file
+rules_file: /etc/kube-sentinel/rules.yaml
+
+store:
+  # Storage type: memory or sqlite
+  type: memory
+
+  # For sqlite, specify the database path
+  # path: /data/sentinel.db
