@@ -8,7 +8,7 @@ metadata:
 data:
   config.yaml: |
     loki:
-      url: http://loki.monitoring:3100
+      url: http://loki.monitoring.svc.cluster.local:3100
       query: '{namespace=~".+"} |~ "(?i)(error|fatal|panic|exception|fail)"'
       poll_interval: 30s
       lookback: 5m
@@ -38,6 +38,7 @@ data:
 
   rules.yaml: |
     rules:
+      # P1 - Critical errors requiring immediate attention
       - name: crashloop-backoff
         match:
           pattern: "CrashLoopBackOff|Back-off restarting failed container"
@@ -58,13 +59,14 @@ data:
 
       - name: panic
         match:
-          pattern: "(?i)panic:|runtime error:|fatal error:"
+          pattern: "panic:|runtime error:|fatal error:"
         priority: P1
         remediation:
           action: none
           cooldown: 5m
         enabled: true
 
+      # P2 - High priority errors
       - name: image-pull-error
         match:
           pattern: "ImagePullBackOff|ErrImagePull|failed to pull image"
@@ -83,6 +85,25 @@ data:
           cooldown: 3m
         enabled: true
 
+      - name: volume-mount-failed
+        match:
+          pattern: "Unable to attach or mount|FailedMount"
+        priority: P2
+        remediation:
+          action: none
+          cooldown: 5m
+        enabled: true
+
+      # P3 - Medium priority errors
+      - name: dns-error
+        match:
+          pattern: "EAI_AGAIN|NXDOMAIN|no such host"
+        priority: P3
+        remediation:
+          action: none
+          cooldown: 2m
+        enabled: true
+
       - name: connection-refused
         match:
           pattern: "connection refused|ECONNREFUSED"
@@ -92,9 +113,29 @@ data:
           cooldown: 2m
         enabled: true
 
+      - name: timeout-error
+        match:
+          pattern: "timeout|timed out|deadline exceeded"
+        priority: P3
+        remediation:
+          action: none
+          cooldown: 2m
+        enabled: true
+
+      # P4 - Low priority / Informational
       - name: generic-error
         match:
-          pattern: "(?i)\\berror\\b"
+          pattern: "error"
+        priority: P4
+        remediation:
+          action: none
+          cooldown: 5m
+        enabled: true
+
+      # Default catch-all rule - MUST BE LAST
+      - name: default
+        match:
+          pattern: "."
         priority: P4
         remediation:
           action: none
