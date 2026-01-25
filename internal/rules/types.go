@@ -88,13 +88,14 @@ func (p Priority) Color() string {
 type ActionType string
 
 const (
-	ActionNone             ActionType = "none"
-	ActionRestartPod       ActionType = "restart-pod"
-	ActionScaleUp          ActionType = "scale-up"
-	ActionScaleDown        ActionType = "scale-down"
-	ActionRollback         ActionType = "rollback"
-	ActionDeleteStuckPods  ActionType = "delete-stuck-pods"
-	ActionExecScript       ActionType = "exec-script"
+	ActionNone              ActionType = "none"
+	ActionRestartPod        ActionType = "restart-pod"
+	ActionScaleUp           ActionType = "scale-up"
+	ActionScaleDown         ActionType = "scale-down"
+	ActionRollback          ActionType = "rollback"
+	ActionDeleteStuckPods   ActionType = "delete-stuck-pods"
+	ActionExecScript        ActionType = "exec-script"
+	ActionTriggerArgoWorkflow ActionType = "trigger-argo-workflow"
 )
 
 // Rule defines a matching rule for errors

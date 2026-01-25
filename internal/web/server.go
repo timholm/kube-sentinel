@@ -248,6 +248,9 @@ func (s *Server) templateFuncs() template.FuncMap {
 		"priorityLabel": func(p rules.Priority) string {
 			return p.Label()
 		},
+		"priorityCount": func(m map[rules.Priority]int, key string) int {
+			return m[rules.Priority(key)]
+		},
 		"truncate": func(s string, n int) string {
 			if len(s) <= n {
 				return s

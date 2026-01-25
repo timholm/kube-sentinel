@@ -11,6 +11,7 @@ import (
 
 	"github.com/kube-sentinel/kube-sentinel/internal/rules"
 	"github.com/kube-sentinel/kube-sentinel/internal/store"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -76,6 +77,13 @@ func (e *Engine) RegisterAction(action Action) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.actions[action.Name()] = action
+}
+
+// RegisterArgoWorkflowAction registers the Argo Workflow action with a dynamic client
+func (e *Engine) RegisterArgoWorkflowAction(dynamicClient dynamic.Interface, namespace string) {
+	if dynamicClient != nil {
+		e.RegisterAction(NewArgoWorkflowAction(dynamicClient, namespace))
+	}
 }
 
 // GetAction returns an action by name
